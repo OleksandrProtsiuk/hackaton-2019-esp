@@ -7,7 +7,6 @@
 #include <ESP8266HTTPClient.h> //
 #include <ArduinoJson.h>
 
-
 #define GAS_LEAK 13
 #define TEMP_BUS 2
 #define GAS_COUNTER_LED 0
@@ -23,7 +22,7 @@ DallasTemperature sensor(&oneWire);
 const int threshold= 10;
 int resetAlarm = 0;
 int volume;
-int status = 0;
+boolean status = false;
 int i = 0;
 
 void setup() {
@@ -66,10 +65,12 @@ void sendData() {
 
       volume = i;
 
+      JSONencoder["authenticity_token"] = "0";
       JSONencoder["pincode"] = "123456";
       JSONencoder["volume"] = volume;
       JSONencoder["temperatura"] = getRoomTemperature();
       JSONencoder["status"] = status;
+
 
 
       char JSONmessageBuffer[300];
@@ -78,7 +79,7 @@ void sendData() {
 
       HTTPClient http;    //Declare object of class HTTPClient
 
-      http.begin("http://768c618d.ngrok.io/devises");      //Specify request destination
+      http.begin("http://8edae38f.ngrok.io/devises");      //Specify request destination
       http.addHeader("Content-Type", "application/json");  //Specify content-type header
 
       int httpCode = http.POST(JSONmessageBuffer);   //Send the request
@@ -105,9 +106,10 @@ void loop() {
 
   if (gasLeak) {
     myservo.write(0);
-    status = 0;
+    status = false;
   }
   else {
+    status = true;
     sendData();
     do {
       myservo.write(90);
@@ -117,7 +119,6 @@ void loop() {
       getRoomTemperature();
       yield();
       delay(3000);
-      status = 1;
     } while (resetAlarm == 0);
   }
 
